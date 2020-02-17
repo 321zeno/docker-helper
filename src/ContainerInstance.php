@@ -2,23 +2,44 @@
 
 namespace DockerHelper;
 
+use DateTime;
+
 /**
  * Instance of a Docker container
  */
 class ContainerInstance
 {
-    protected $id;
+    protected string $id;
 
-    protected $name;
+    protected string $name;
 
-    protected $attributes = [];
+    /**
+     * @var array<string, mixed> $attributes 
+     */
+    protected array $attributes = [];
 
-    private $arrayable = [
+    /**
+     * @var array<string> $arrayable 
+     */
+    private array $arrayable = [
         'labels',
         'mounts',
         'networks',
     ];
+    
+    /**
+     * @var array<string> $timestamps 
+     */
+    private array $timestamps = [
+        'createdat',
+    ];
 
+    /**
+     * @param string $id
+     * @param string $name
+     * @param array<string, mixed> $attributes
+     * @return void
+     */
     public function __construct(string $id, string $name = null, array $attributes = [])
     {
         $this->id = $id;
@@ -49,8 +70,12 @@ class ContainerInstance
 
         return current($found)['host'];
     }
-
-    public function __get($key)
+    
+    /**
+     * @param string $key
+     * @return mixed
+     */
+    public function __get(string $key)
     {
         if (!$key) {
             return;
@@ -63,7 +88,12 @@ class ContainerInstance
         return null;
     }
 
-    public function __set($key, $value)
+    /**
+     * @param string $key
+     * @param mixed $value
+     * @return void
+     */
+    public function __set(string $key, $value)
     {
         $this->setAttribute($key, $value);
     }
@@ -78,10 +108,22 @@ class ContainerInstance
         return $this->id;
     }
 
-    protected function setAttribute($key, $value) : void
+    /**
+
+     *
+     * @param string $key
+     * @param mixed $value
+     * @return void
+     */
+    protected function setAttribute(string $key, $value) : void
     {
         if (in_array($key, $this->arrayable)) {
             $this->attributes[$key] = explode(',', $value);
+            return;
+        }
+
+        if (in_array($key, $this->timestamps)) {
+            $this->attributes[$key] =  DateTime::createFromFormat('Y-m-d H:i:s P T', $value);
             return;
         }
 
@@ -93,7 +135,13 @@ class ContainerInstance
         $this->attributes[$key] = $value;
     }
 
-    protected function setPorts($portsValue) : array
+    /**
+     * Parses the ports string into an array
+     *
+     * @param string $portsValue
+     * @return array<array|null>
+     */
+    protected function setPorts(string $portsValue) : array
     {
         $mappings = array_filter(explode(',', $portsValue));
         $ports = [];
@@ -105,6 +153,11 @@ class ContainerInstance
         return $ports;
     }
 
+    /**
+     *
+     * @param string $portMapping
+     * @return array<string|int>|null
+     */
     protected function parsePortMapping(string $portMapping) : ?array
     {
         $portMapping = preg_replace('/\s/', '', $portMapping);

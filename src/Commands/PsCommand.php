@@ -3,16 +3,21 @@ namespace DockerHelper\Commands;
 
 use Closure;
 use DockerHelper\ContainerInstance;
-use Symfony\Component\Process\Exception\ProcessFailedException;
-use Symfony\Component\Process\Process;
+use InvalidArgumentException;
 
 class PsCommand
 {
-    protected $containers = [];
+    /**
+     * @var array<ContainerInstance> $containers
+     */
+    protected array $containers = [];
 
-    protected $all = false;
+    protected bool $all = false;
 
-    protected $psPlaceholders = [
+    /**
+     * @var array<string> $psPlaceholders
+     */
+    protected array $psPlaceholders = [
         '.ID', // Container ID
         '.Image', // Image ID
         '.Command', // Quoted command
@@ -30,7 +35,7 @@ class PsCommand
     /**
      * Returns the output of docker ps
      *
-     * @return array
+     * @return static
      */
     public function run() : self
     {
@@ -41,6 +46,9 @@ class PsCommand
         return $this;
     }
 
+    /**
+     * @return array<ContainerInstance>
+     */
     public function getContainers() : array
     {
         return $this->containers;
@@ -63,7 +71,7 @@ class PsCommand
     /**
      * Returns the ps command as an array that can be supplied to Symfony\Process
      *
-     * @return array
+     * @return array<string>
      */
     public function psCommand() : array
     {
@@ -78,28 +86,26 @@ class PsCommand
         return $params;
     }
 
+    /**
+     * Retrieve the input of the `docker ps` command
+     *
+     * @param array<string> $psCommand
+     * @return string
+     */
     public function psOutput(array $psCommand) : string
     {
-        $process   = new Process($psCommand);
-        $process->run();
-
-        if (!$process->isSuccessful()) {
-            throw new ProcessFailedException($process);
-        }
-
-        return $process->getOutput();
+        return shell_exec(implode(' ', $psCommand));
     }
 
     /**
      * Converts the output of a ps command to an Array of containers
      *
      * @param string $psCommandOutput
-     * @return array
+     * @return array<ContainerInstance>
      */
     protected function psOutputToContainersArray(string $psCommandOutput) : array
     {
-        $lines = explode(PHP_EOL, $psCommandOutput);
-        // var_dump($lines); die();
+        $lines = explode("\n", $psCommandOutput);
         $lines = array_filter($lines);
         $keys  = $this->normalisedPsFormatParameters();
         
@@ -113,6 +119,11 @@ class PsCommand
         return $psArray;
     }
 
+    /**
+     * Converts the PS format parameters into attribute names
+     *
+     * @return array<string>
+     */
     protected function normalisedPsFormatParameters() : array
     {
         return array_map(function ($placeholder) {

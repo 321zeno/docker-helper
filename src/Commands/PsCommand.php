@@ -1,21 +1,21 @@
 <?php
+
 namespace DockerHelper\Commands;
 
 use Closure;
 use DockerHelper\ContainerInstance;
-use InvalidArgumentException;
 
 class PsCommand
 {
     /**
-     * @var array<ContainerInstance> $containers
+     * @var array<ContainerInstance>
      */
     protected array $containers = [];
 
     protected bool $all = false;
 
     /**
-     * @var array<string> $psPlaceholders
+     * @var array<string>
      */
     protected array $psPlaceholders = [
         '.ID', // Container ID
@@ -37,10 +37,10 @@ class PsCommand
      *
      * @return static
      */
-    public function run() : self
+    public function run(): self
     {
-        $psCommand        = $this->psCommand();
-        $output           = $this->psOutput($psCommand);
+        $psCommand = $this->psCommand();
+        $output = $this->psOutput($psCommand);
         $this->containers = $this->psOutputToContainersArray($output);
 
         return $this;
@@ -49,19 +49,19 @@ class PsCommand
     /**
      * @return array<ContainerInstance>
      */
-    public function getContainers() : array
+    public function getContainers(): array
     {
         return $this->containers;
     }
 
-    public function filter(Closure $filterBy) : self
+    public function filter(Closure $filterBy): self
     {
         $this->containers = array_filter($this->containers, $filterBy);
 
         return $this;
     }
 
-    public function all() : self
+    public function all(): self
     {
         $this->all = true;
 
@@ -73,9 +73,9 @@ class PsCommand
      *
      * @return array<string>
      */
-    public function psCommand() : array
+    public function psCommand(): array
     {
-        $wrappedPsParams = array_map(fn($placeholder) => sprintf('{{%s}}', $placeholder), $this->psPlaceholders);
+        $wrappedPsParams = array_map(fn ($placeholder) => sprintf('{{%s}}', $placeholder), $this->psPlaceholders);
         $formatString = implode('||', $wrappedPsParams);
         $params = ['docker', 'ps', '--no-trunc', '--format', sprintf('"%s"', $formatString)];
 
@@ -90,9 +90,8 @@ class PsCommand
      * Retrieve the input of the `docker ps` command
      *
      * @param array<string> $psCommand
-     * @return string
      */
-    public function psOutput(array $psCommand) : string
+    public function psOutput(array $psCommand): string
     {
         return (string) shell_exec(implode(' ', $psCommand));
     }
@@ -100,16 +99,15 @@ class PsCommand
     /**
      * Converts the output of a ps command to an Array of containers
      *
-     * @param string $psCommandOutput
      * @return array<ContainerInstance>
      */
-    protected function psOutputToContainersArray(string $psCommandOutput) : array
+    protected function psOutputToContainersArray(string $psCommandOutput): array
     {
         $lines = explode("\n", $psCommandOutput);
         $lines = array_filter($lines);
-        $keys  = $this->normaliseReturnFormatParameters();
-        
-        $psArray = array_map(function ($line) use ($keys) {
+        $keys = $this->normaliseReturnFormatParameters();
+
+        return array_map(function ($line) use ($keys) {
             $lineArray = explode('||', $line);
             $attributes = [];
             foreach ($keys as $index => $key) {
@@ -118,8 +116,6 @@ class PsCommand
 
             return new ContainerInstance($attributes['id'], $attributes['names'], $attributes);
         }, $lines);
-
-        return $psArray;
     }
 
     /**
@@ -127,12 +123,11 @@ class PsCommand
      *
      * @return array<string>
      */
-    protected function normaliseReturnFormatParameters() : array
+    protected function normaliseReturnFormatParameters(): array
     {
         return array_map(function ($placeholder) {
             $placeholder = (string) preg_replace('/\W/', '', $placeholder);
-            $placeholder = strtolower($placeholder);
-            return $placeholder;
+            return strtolower($placeholder);
         }, $this->psPlaceholders);
     }
 }

@@ -11,6 +11,17 @@
     },
     "require-dev": {
         "phpunit/phpunit": "^9.0",
-        "phpstan/phpstan": "^0.12.11"
+        "phpstan/phpstan": "^0.12.11",
+        "symplify/easy-coding-standard": "^7.2"
+    },
+    "scripts": {
+        "tests": [
+            "@phpunit",
+            "@ecs",
+            "@phpstan"
+        ],
+        "ecs": "vendor/bin/ecs check src tests --ansi",
+        "phpunit": "vendor/bin/phpunit --testdox",
+        "phpstan": "vendor/bin/phpstan analyse src -l 8 --ansi"
     }
 }

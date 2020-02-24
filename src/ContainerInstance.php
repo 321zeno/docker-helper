@@ -14,31 +14,28 @@ class ContainerInstance
     protected string $name;
 
     /**
-     * @var array<string, mixed> $attributes 
+     * @var array<string, mixed>
      */
     protected array $attributes = [];
 
     /**
-     * @var array<string> $arrayable 
+     * @var array<string>
      */
     private array $arrayable = [
         'labels',
         'mounts',
         'networks',
     ];
-    
+
     /**
-     * @var array<string> $timestamps 
+     * @var array<string>
      */
     private array $timestamps = [
         'createdat',
     ];
 
     /**
-     * @param string $id
-     * @param string $name
      * @param array<string, mixed> $attributes
-     * @return void
      */
     public function __construct(string $id, string $name = null, array $attributes = [])
     {
@@ -50,37 +47,12 @@ class ContainerInstance
         }
     }
 
-    public function getHostPortByContainerPort(int $containerPort) : ?int
-    {
-        if (!is_array($this->attributes['ports'])) {
-            return null;
-        }
-
-        $found = array_filter($this->attributes['ports'], function($mapping) use ($containerPort) {
-            return (
-                isset($mapping['host']) &&
-                isset($mapping['docker']) &&
-                $mapping['docker'] === $containerPort
-            );
-        });
-
-        if (!$found) {
-            return null;
-        }
-
-        return current($found)['host'];
-    }
-    
     /**
      * @param string $key
      * @return mixed
      */
     public function __get(string $key)
     {
-        if (!$key) {
-            return;
-        }
-    
         if (array_key_exists($key, $this->attributes)) {
             return $this->attributes[$key];
         }
@@ -90,40 +62,60 @@ class ContainerInstance
 
     /**
      * @param string $key
-     * @param mixed $value
+     * @param mixed  $value
      * @return void
      */
-    public function __set(string $key, $value)
+    public function __set(string $key, $value): void
     {
         $this->setAttribute($key, $value);
     }
 
-    public function getName() : string
+    public function getHostPortByContainerPort(int $containerPort): ?int
+    {
+        if (! is_array($this->attributes['ports'])) {
+            return null;
+        }
+
+        $found = array_filter($this->attributes['ports'], function ($mapping) use ($containerPort) {
+            return isset($mapping['host']) &&
+                isset($mapping['docker']) &&
+                $mapping['docker'] === $containerPort
+            ;
+        });
+
+        if (! $found) {
+            return null;
+        }
+
+        return current($found)['host'];
+    }
+
+    public function getName(): string
     {
         return $this->name;
     }
 
-    public function getId() : string
+    public function getId(): string
     {
         return $this->id;
     }
 
     /**
-
+     * Set an attribute
      *
      * @param string $key
-     * @param mixed $value
+     * @param mixed  $value
      * @return void
      */
-    protected function setAttribute(string $key, $value) : void
+    protected function setAttribute(string $key, $value): void
     {
-        if (in_array($key, $this->arrayable)) {
+        if (in_array($key, $this->arrayable, true)) {
             $this->attributes[$key] = explode(',', $value);
             return;
         }
 
-        if (in_array($key, $this->timestamps)) {
-            $this->attributes[$key] =  DateTime::createFromFormat('Y-m-d H:i:s P T', $value);
+        if (in_array($key, $this->timestamps, true)) {
+            $this->attributes[$key] = DateTime::createFromFormat('Y-m-d H:i:s P T', $value);
             return;
         }
 
@@ -138,10 +130,9 @@ class ContainerInstance
     /**
      * Parses the ports string into an array
      *
-     * @param string $portsValue
      * @return array<array|null>
      */
-    protected function setPorts(string $portsValue) : array
+    protected function setPorts(string $portsValue): array
     {
         $mappings = array_filter(explode(',', $portsValue));
         $ports = [];
@@ -154,34 +145,32 @@ class ContainerInstance
     }
 
     /**
-     *
-     * @param string $portMapping
      * @return array<string|int>|null
      */
-    protected function parsePortMapping(string $portMapping) : ?array
+    protected function parsePortMapping(string $portMapping): ?array
     {
         $portMapping = preg_replace('/\s/', '', $portMapping);
 
         if (preg_match('/([\d\.]+):(\d+)->(\d+)\/([a-z]+)/', (string) $portMapping, $matches)) {
             return [
-                'bind'     => $matches[1],
-                'host'     => (int) $matches[2],
-                'docker'   => (int) $matches[3],
+                'bind' => $matches[1],
+                'host' => (int) $matches[2],
+                'docker' => (int) $matches[3],
                 'protocol' => $matches[4],
             ];
         }
 
         if (preg_match('/(\d+)->(\d+)\/([a-z]+)/', (string) $portMapping, $matches)) {
             return [
-                'host'     => (int) $matches[1],
-                'docker'   => (int) $matches[2],
+                'host' => (int) $matches[1],
+                'docker' => (int) $matches[2],
                 'protocol' => $matches[3],
             ];
         }
 
         if (preg_match('/(\d+)\/([a-z]+)/', (string) $portMapping, $matches)) {
             return [
-                'docker'   => $matches[1],
+                'docker' => $matches[1],
                 'protocol' => $matches[2],
             ];
         }

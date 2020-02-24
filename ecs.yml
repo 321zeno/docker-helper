@@ -1,0 +1,13 @@
+parameters:
+    line_ending: "\n"
+    sets:
+        - 'common'
+        - 'clean-code'
+        - 'dead-code'
+        - 'psr12'
+    skip:
+        PhpCsFixer\Fixer\Phpdoc\NoSuperfluousPhpdocTagsFixer: 
+            - 'src/ContainerInstance.php'
+        PhpCsFixer\Fixer\Phpdoc\PhpdocNoEmptyReturnFixer:
+            - 'src/ContainerInstance.php'
+        PhpCsFixer\Fixer\ClassNotation\ClassAttributesSeparationFixer: ~

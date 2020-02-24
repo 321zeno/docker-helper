@@ -94,7 +94,7 @@ class PsCommand
      */
     public function psOutput(array $psCommand) : string
     {
-        return shell_exec(implode(' ', $psCommand));
+        return (string) shell_exec(implode(' ', $psCommand));
     }
 
     /**
@@ -107,11 +107,14 @@ class PsCommand
     {
         $lines = explode("\n", $psCommandOutput);
         $lines = array_filter($lines);
-        $keys  = $this->normalisedPsFormatParameters();
+        $keys  = $this->normaliseReturnFormatParameters();
         
         $psArray = array_map(function ($line) use ($keys) {
             $lineArray = explode('||', $line);
-            $attributes = array_combine($keys, $lineArray);
+            $attributes = [];
+            foreach ($keys as $index => $key) {
+                $attributes[$key] = $lineArray[$index];
+            }
 
             return new ContainerInstance($attributes['id'], $attributes['names'], $attributes);
         }, $lines);
@@ -124,10 +127,10 @@ class PsCommand
      *
      * @return array<string>
      */
-    protected function normalisedPsFormatParameters() : array
+    protected function normaliseReturnFormatParameters() : array
     {
         return array_map(function ($placeholder) {
-            $placeholder = preg_replace('/\W/', '', $placeholder);
+            $placeholder = (string) preg_replace('/\W/', '', $placeholder);
             $placeholder = strtolower($placeholder);
             return $placeholder;
         }, $this->psPlaceholders);

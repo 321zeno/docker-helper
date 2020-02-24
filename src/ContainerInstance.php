@@ -43,7 +43,7 @@ class ContainerInstance
     public function __construct(string $id, string $name = null, array $attributes = [])
     {
         $this->id = $id;
-        $this->name = $name;
+        $this->name = (string) $name;
 
         foreach ($attributes as $key => $value) {
             $this->setAttribute($key, $value);
@@ -162,7 +162,7 @@ class ContainerInstance
     {
         $portMapping = preg_replace('/\s/', '', $portMapping);
 
-        if (preg_match('/([\d\.]+):(\d+)->(\d+)\/([a-z]+)/', $portMapping, $matches)) {
+        if (preg_match('/([\d\.]+):(\d+)->(\d+)\/([a-z]+)/', (string) $portMapping, $matches)) {
             return [
                 'bind'     => $matches[1],
                 'host'     => (int) $matches[2],
@@ -171,7 +171,7 @@ class ContainerInstance
             ];
         }
 
-        if (preg_match('/(\d+)->(\d+)\/([a-z]+)/', $portMapping, $matches)) {
+        if (preg_match('/(\d+)->(\d+)\/([a-z]+)/', (string) $portMapping, $matches)) {
             return [
                 'host'     => (int) $matches[1],
                 'docker'   => (int) $matches[2],
@@ -179,7 +179,7 @@ class ContainerInstance
             ];
         }
 
-        if (preg_match('/(\d+)\/([a-z]+)/', $portMapping, $matches)) {
+        if (preg_match('/(\d+)\/([a-z]+)/', (string) $portMapping, $matches)) {
             return [
                 'docker'   => $matches[1],
                 'protocol' => $matches[2],

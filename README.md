@@ -1,3 +1,5 @@
+![Build and test](https://github.com/321zeno/docker-helper/workflows/Build%20and%20test/badge.svg)
+
 # Docker Helper
 
 Utility classes for working with Docker,
